@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
 function Borrow() {
-
   const [books, setBooks] = useState([]);
   const [name, setName] = useState("");
   const [selectedBook, setSelectedBook] = useState("");
@@ -19,15 +18,27 @@ function Borrow() {
 
     if (error) {
       console.error(error);
+      alert("Failed to load available books");
       return;
     }
 
-    setBooks(data);
+    setBooks(data || []);
   }
 
-  async function handleBorrow() {
-    if (!name || !selectedBook) {
+  async function handleBorrow(e) {
+    e.preventDefault();
+
+    if (!name.trim() || !selectedBook) {
       alert("Please fill all the details");
+      return;
+    }
+
+    const book = books.find(
+      (item) => String(item.id) === String(selectedBook)
+    );
+
+    if (!book) {
+      alert("Please select a valid book");
       return;
     }
 
@@ -35,9 +46,9 @@ function Borrow() {
       .from("borrowings")
       .insert([
         {
-          borrower_name: name,
-          book_title: selectedBook
-        }
+          borrower_name: name.trim(),
+          book_title: book.title,
+        },
       ]);
 
     if (insertError) {
@@ -49,7 +60,7 @@ function Borrow() {
     const { error: updateError } = await supabase
       .from("books")
       .update({ available: false })
-      .eq("title", selectedBook);
+      .eq("id", book.id);
 
     if (updateError) {
       console.error(updateError);
@@ -57,20 +68,21 @@ function Borrow() {
       return;
     }
 
-    alert("Book borrowed successfully!");
+    alert(`"${book.title}" borrowed successfully!`);
+
     setName("");
     setSelectedBook("");
+
     getBooks();
   }
 
   return (
     <main className="borrow-page">
-
       <h1>Borrow a Book</h1>
 
-      <div className="borrow-form">
-
+      <form className="borrow-form" onSubmit={handleBorrow}>
         <label htmlFor="name">Your Name</label>
+
         <input
           id="name"
           type="text"
@@ -80,25 +92,25 @@ function Borrow() {
         />
 
         <label htmlFor="book">Select Book</label>
+
         <select
           id="book"
           value={selectedBook}
           onChange={(e) => setSelectedBook(e.target.value)}
         >
           <option value="">-- Select a Book --</option>
+
           {books.map((book) => (
-            <option key={book.id} value={book.title}>
-              {book.title}
+            <option key={book.id} value={book.id}>
+              {book.title} — {book.author}
             </option>
           ))}
         </select>
 
-        <button onClick={handleBorrow}>
+        <button type="submit">
           Borrow Book
         </button>
-
-      </div>
-
+      </form>
     </main>
   );
 }
