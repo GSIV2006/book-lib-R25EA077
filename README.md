@@ -135,11 +135,3 @@ Displaying database data dynamically in React
 G.S.I. Venkat
 
 Built as part of a Web Application Development assignment.
-
-
-### Then save it and push:
-
-```bash
-git add README.md
-git commit -m "Add project documentation"
-git push origin main
